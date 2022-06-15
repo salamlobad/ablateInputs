@@ -1,0 +1,222 @@
+---
+environment:
+  title: _3dSlabBurner
+  tagDirectory: true
+arguments: {}
+timestepper:
+  name: theMainTimeStepper
+  arguments:
+    ts_type: rk
+    ts_max_time: 1
+    ts_max_steps: 10
+    ts_dt: 1.0e-5
+    ts_adapt_monitor: ""
+    ts_adapt_safety: 0.8
+  io: !<!ablate::io::Hdf5MultiFileSerializer>
+    interval: 1
+  domain: !<!ablate::domain::BoxMeshBoundaryCells>
+    name: simpleBoxField
+    faces: [40, 6, 6]
+    lower: [0.0, 0.0, 0.0]
+    upper: [0.165354, 0.027686 0.027686]
+    simplex: false
+    preModifiers:
+      - !<!ablate::domain::modifiers::SetFromOptions>
+        dm_refine: 0
+        dm_partition_view: 1
+      - !<!ablate::domain::modifiers::DistributeWithGhostCells>
+        ghostCellDepth: 3
+    postModifiers:
+      - !<!ablate::domain::modifiers::MergeLabels>
+        mergedRegion:
+          name: allBoundaryWalls
+        regions:
+          - name: boundaryCellsTop
+          - name: boundaryCellsBottom
+          - name: boundaryCellsFront
+          - name: boundaryCellsBack
+      - !<!ablate::domain::modifiers::CreateLabel>
+        region:
+          name: slabBurner
+        function: !<!ablate::mathFunctions::geom::Surface>
+          path: ../geom/slabBurner.v1.stp
+      - !<!ablate::domain::modifiers::SubtractLabel>
+        differenceRegion:
+          name: flowRegion
+        minuendRegion:
+          name: interiorCells
+        subtrahendRegions:
+          - name: slabBurner
+      - !<!ablate::domain::modifiers::SubtractLabel>
+        differenceRegion:
+          name: boundaryWalls
+        minuendRegion:
+          name: allBoundaryWalls
+        subtrahendRegions:
+          - name: slabBurner
+      - !<!ablate::domain::modifiers::TagLabelInterface>
+        leftRegion:
+          name: flowRegion
+        rightRegion:
+          name: slabBurner
+        boundaryFaceRegion:
+          name: slabBurnerBoundaryFaces
+        rightBoundaryCellRegion:
+          name: slabBurnerBoundaryCells
+      - !<!ablate::domain::modifiers::SubtractLabel>
+        differenceRegion:
+          name: interiorFlowRegion
+        minuendRegion:
+          name: flowRegion
+        subtrahendRegions:
+          - name: slabBurnerBoundaryFaces
+        incompleteLabel: true
+      - !<!ablate::domain::modifiers::GhostBoundaryCells> ""
+    fields:
+      - !<!ablate::finiteVolume::CompressibleFlowFields>
+        eos: !<!ablate::eos::TChem> &1
+          mechFile: ../mechanisms/grimech30.mech.dat
+          thermoFile: ../mechanisms/grimech30.thermo.dat
+        conservedFieldOptions:
+          petscfv_type: upwind
+        region:
+          name: domain
+      - !<!ablate::domain::FieldDescription>
+        name: pressure
+        type: FV
+        location: aux
+        region:
+          name: domain
+  initialization:
+    - !<!ablate::finiteVolume::fieldFunctions::Euler>
+      state: &2
+        eos: *1
+        temperature: !<!ablate::mathFunctions::geom::Sphere>
+          center: [.036, 0.05, 0.05]
+          radius: 0.025
+          insideValues: [1500]
+          outsideValues: [298.15]
+        pressure: 101325.0
+        velocity: 0, 0, 0
+        massFractions: !<!ablate::finiteVolume::fieldFunctions::MassFractions>
+          eos: *1
+          values:
+            - fieldName: O2
+              field: 0.36351986913
+            - fieldName: N2
+              field: 0.63648013087
+    - !<!ablate::finiteVolume::fieldFunctions::DensityMassFractions>
+      state: *2
+    - !<!ablate::finiteVolume::fieldFunctions::Euler>
+      region:
+        name: slabBurnerBoundaryCells
+      state: &3
+        eos: *1
+        temperature: 653.0
+        pressure: 101325
+        velocity: 0.0, 0.0, 0.0
+        massFractions: !<!ablate::finiteVolume::fieldFunctions::MassFractions> &4
+          eos: *1
+          values:
+            - fieldName: H2
+              field: 3.11573908295E-07
+            - fieldName: CH4
+              field: 1.37640311576E-01
+            - fieldName: CO
+              field: 5.59511130432E-01
+            - fieldName: CO2
+              field: 2.67621505110E-05
+            - fieldName: C2H2
+              field: 8.12221908950E-04
+            - fieldName: C2H4
+              field: 8.12221908950E-04
+            - fieldName: C2H6
+              field: 2.61085823724E-02
+            - fieldName: CH2CO
+              field: 2.00544314596E-07
+            - fieldName: C3H8
+              field: 2.51803728765E-02
+    - !<!ablate::finiteVolume::fieldFunctions::DensityMassFractions>
+      region:
+        name: slabBurnerBoundaryCells
+      state: *3
+solvers:
+  - !<!ablate::finiteVolume::CompressibleFlowSolver>
+    id: flowField
+    region:
+      name: interiorFlowRegion
+    parameters:
+      cfl: 0.5
+    eos: *1
+    transport: !<!ablate::eos::transport::Sutherland> &5
+      eos: *1
+    additionalProcesses:
+      - !<!ablate::finiteVolume::processes::PressureGradientScaling> &6
+        eos: *1
+        alphaInit: 25.0
+        maxAlphaAllowed: 100.0
+        domainLength: 0.165354
+        log: !<!ablate::monitors::logs::StdOut> ""
+      - !<!ablate::finiteVolume::processes::TChemReactions>
+        eos: *1
+    fluxCalculator: !<!ablate::finiteVolume::fluxCalculator::AusmpUp>
+      pgs: *6
+    monitors:
+      - !<!ablate::monitors::TimeStepMonitor>
+        interval: 2
+      - !<!ablate::monitors::PhysicsTimeStep>
+        interval: 2
+  - !<!ablate::boundarySolver::BoundarySolver>
+    id: inlet
+    region:
+      name: boundaryCellsLeft
+    fieldBoundary:
+      name: boundaryFaces
+    mergeFaces: true
+    processes:
+      - !<!ablate::boundarySolver::lodi::Inlet>
+        eos: *1
+        pgs: *6
+        velocity: min(15, t*15/.025) , 0.0
+  - !<!ablate::boundarySolver::BoundarySolver>
+    id: outlet
+    region:
+      name: boundaryCellsRight
+    fieldBoundary:
+      name: boundaryFaces
+    mergeFaces: true
+    processes:
+      - !<!ablate::boundarySolver::lodi::OpenBoundary>
+        eos: *1
+        referencePressure: 101325.0
+        maxAcousticsLength: 0.165354
+        reflectFactor: .15
+        pgs: *6
+  - !<!ablate::boundarySolver::BoundarySolver>
+    id: walls
+    region:
+      name: boundaryWalls
+    fieldBoundary:
+      name: boundaryFaces
+    mergeFaces: true
+    processes:
+      - !<!ablate::boundarySolver::lodi::IsothermalWall>
+        eos: *1
+        pgs: *6
+  - !<!ablate::boundarySolver::BoundarySolver>
+    id: slab boundary
+    region:
+      name: slabBurnerBoundaryCells
+    fieldBoundary:
+      name: slabBurnerBoundaryFaces
+    processes:
+      - !<!ablate::boundarySolver::physics::Sublimation>
+        latentHeatOfFusion: 941000.000
+        transportModel: *5
+        pgs: *6
+        eos: *1
+        additionalHeatFlux: !<!ablate::mathFunctions::geom::Sphere>
+          center: [.036, 0.01, 0.01]
+          radius: 0.005
+          insideValues: "t < .06? 250000 : 0.0 "
+        massFractions: *4
