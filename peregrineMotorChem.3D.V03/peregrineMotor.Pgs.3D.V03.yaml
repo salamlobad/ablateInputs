@@ -1,4 +1,7 @@
 # Revises code from slab burner and loaded in cad model of peregrine motor combustion chamber
+# Cut entire combustion chamber out of flow field and defined fuel grain as fuel
+# Currently used !ablate::mathFunctions::geom::Surface for both combustion chamber and fuel grain
+# Should later switch to using !ablate::mathFunctions::Formula when creating a label for the fuel grain
 ---
 environment:
   title: _3dPeregrineMotor
@@ -10,7 +13,7 @@ timestepper:
     ts_type: rk
     ts_max_time: 1
     ts_max_steps: 25 # 1000000
-    ts_dt: 1.0e-10 # should be 1.0e-10, testing running locally
+    ts_dt: 1.0e-5 # should be 1.0e-10, testing running locally
     ts_adapt_monitor: ""
     ts_adapt_safety: 0.8
   io:
@@ -18,7 +21,7 @@ timestepper:
     interval: 0 # 1000
   domain: !ablate::domain::BoxMeshBoundaryCells
     name: simpleBoxField
-    faces: [40, 6, 6]
+    faces: [120, 18, 18] # [40, 6, 6]
     lower: [ 0.0, -0.2, -0.2]
     upper: [1.88, 0.2, 0.2]
     simplex: false
@@ -43,8 +46,13 @@ timestepper:
         region:
           name: combustionChamber
         function: !ablate::mathFunctions::geom::Surface
-          #path: ../geom/FullSizeGrain2.STEP
           path: ../geom/CombustionChamberV2.STEP
+      - !ablate::domain::modifiers::CreateLabel
+        # define the fuel grain
+        region:
+          name: fuelGrain
+        function: !ablate::mathFunctions::geom::Surface
+          path: ../geom/FullSizeGrainV2.STEP
       - !ablate::domain::modifiers::SubtractLabel
         # cut the combustion chamber out of the flowRegion
         differenceRegion:
@@ -61,6 +69,14 @@ timestepper:
           name: allBoundaryWalls
         subtrahendRegions:
           - name: combustionChamber
+      - !ablate::domain::modifiers::SubtractLabel
+        # cut the fuelGrain out of the rest of the combustion chamber walls
+        differenceRegion:
+          name: combustionChamberWalls
+        minuendRegion:
+          name: boundaryWalls
+        subtrahendRegions:
+          - name: fuelGrain
       - !ablate::domain::modifiers::TagLabelInterface
         # define the boundary between the combustion chamber and flow
         leftRegion:
@@ -71,6 +87,16 @@ timestepper:
           name: combustionChamberBoundaryFaces
         rightBoundaryCellRegion:
           name: combustionChamberBoundaryCells
+      - !ablate::domain::modifiers::TagLabelInterface
+        # define the boundary between the fuel and flow
+        leftRegion:
+          name: flowRegion
+        rightRegion:
+          name: fuelGrain
+        boundaryFaceRegion:
+          name: fuelGrainBoundaryFaces
+        rightBoundaryCellRegion:
+          name: fuelGrainBoundaryCells
       - !ablate::domain::modifiers::SubtractLabel
         # remove the combustionChamberFace from the flowRegion
         differenceRegion:
@@ -120,7 +146,7 @@ timestepper:
     - !ablate::finiteVolume::fieldFunctions::Euler
       # fuel Grain
       region:
-        name: combustionChamberBoundaryCells
+        name: fuelGrainBoundaryCells
       state: &fuelFieldState
         eos: *eos
         temperature: 653.0
@@ -150,7 +176,7 @@ timestepper:
               field: 2.51803728765E-02
     - !ablate::finiteVolume::fieldFunctions::DensityMassFractions
       region:
-        name: combustionChamberBoundaryCells
+        name: fuelGrainBoundaryCells
       state: *fuelFieldState
 
 solvers:
@@ -210,7 +236,7 @@ solvers:
   - !ablate::boundarySolver::BoundarySolver
     id: walls
     region:
-      name: boundaryWalls
+      name: combustionChamberWalls
     fieldBoundary:
       name: boundaryFaces
     mergeFaces: true
@@ -221,9 +247,9 @@ solvers:
   - !ablate::boundarySolver::BoundarySolver
     id: grain boundary
     region:
-      name: combustionChamberBoundaryCells
+      name: fuelGrainBoundaryCells
     fieldBoundary:
-      name: combustionChamberBoundaryFaces
+      name: fuelGrainBoundaryFaces
     processes:
       - !ablate::boundarySolver::physics::Sublimation
         latentHeatOfFusion: 941000.000
