@@ -2,10 +2,10 @@
 #### See https://hpc.llnl.gov/training/tutorials/slurm-and-moab#LC
 
 ##### These lines are for Slurm
-#SBATCH -N 8
+#SBATCH -N 128
 #SBATCH -J 3dPeregrine
-#SBATCH -t 1:00:00
-#SBATCH -p pdebug
+#SBATCH -t 5:00:00
+#SBATCH -p pbatch
 #SBATCH --mail-type=ALL
 #SBATCH -A sunyb
 #SBATCH --mail-user=salamlob@buffalo.edu
@@ -42,11 +42,11 @@ export VELOCITY=".212175*min(1,20*t),0"
 # export VELOCITY="84.835630*min(1,20*t),0.0"
 
 ##### Launch parallel job using srun
-srun -n288 /g/g20/lobad1/ablateOpt/ablate \
+srun -n4608 /g/g20/lobad1/ablateOpt/ablate \
 	--input /p/lustre1/lobad1/ablateInputs/peregrineMotorChem.3D.V02/peregrineMotor.Pgs.3D.V02.yaml \
 	-yaml::environment::title 2Dn128_half_G02 \
 	-yaml::solvers::[1]::processes::[0]::velocity ".212175*min(1,20*t),0" \
 	-yaml::timestepper::arguments::ts_max_steps 250 # 1000000 \
-	-yaml::timestepper::domain::faces [120,18,18]
+	-yaml::timestepper::domain::faces [960,144,144]
 
 echo 'Done'
