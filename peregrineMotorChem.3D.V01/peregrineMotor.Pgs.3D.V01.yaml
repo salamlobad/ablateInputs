@@ -18,15 +18,13 @@ timestepper:
     interval: 2 # 1000
   domain: !ablate::domain::BoxMeshBoundaryCells
     name: simpleBoxField
-    faces: [80, 12, 12]
+    faces: [40, 6, 6]
     lower: [ 0.0, -0.19, -0.19]
     upper: [1.78, 0.19, 0.19]
     simplex: false
+    dm_refine: 0 #this must be zero
+    dm_partition_view: 1
     preModifiers:
-      - !ablate::domain::modifiers::SetFromOptions
-        dm_refine: 0 #this must be zero
-        dm_partition_view: 1
-      #        dm_label_view: interiorFlowRegion
       - !ablate::domain::modifiers::DistributeWithGhostCells
         ghostCellDepth: 1
         postModifiers:
@@ -101,7 +99,7 @@ timestepper:
         eos: *eos
         temperature: !ablate::mathFunctions::geom::Sphere
           center: [0.1, 0, 0] # [.036,  0.05, 0.05]
-            radius: 0.05 # 0.025
+          radius: 0.05 # 0.025
           insideValues: [1500]
           outsideValues: [298.15]
         pressure: 101325.0

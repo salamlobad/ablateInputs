@@ -33,8 +33,7 @@ cd tmp_$SLURM_JOBID
 srun -n288 /g/g20/lobad1/ablateOpt/ablate \
 	--input /p/lustre1/lobad1/ablateInputs/peregrineMotorChem.3D.V04/peregrineMotor.3D.V04.test2.yaml \
 	-yaml::environment::title 3Dn8 \
-	-yaml::solvers::[1]::processes::[0]::velocity ".212175*min(1,20*t),0" \
-	-yaml::timestepper::arguments::ts_max_steps 20 # 1000000 \
+	-yaml::timestepper::arguments::ts_max_steps 20 \
     -yaml::timestepper::domain::path ../geom/cylinder.stp \
     yaml::timestepper::domain::options::dm_refine 3
 

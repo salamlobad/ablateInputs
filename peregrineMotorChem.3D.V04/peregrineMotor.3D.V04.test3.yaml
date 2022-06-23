@@ -12,22 +12,27 @@ timestepper:
   arguments:
     ts_type: rk
     ts_max_time: 100000
-    ts_max_steps: 1
-    ts_dt: 1.0E-10 # 1.0E-10
+    ts_max_steps: 5
+    ts_dt: 1.0E-8 # 1.0E-10
     ts_adapt_safety: 0.9
   # io controls how often the results are saved to a file for visualization and restart
   io:
-    interval: 0 # results are saved at every step.  In real simulations this should be much larger.
+    interval: 1 # results are saved at every step.  In real simulations this should be much larger.
 
   # load in a cad file directly and then create a surface mesh then volumetric mesh from the cad geometry
   domain: !ablate::domain::CadFile
     name: exampleNozzle
+    #path: ../geom/cylinder_concave_end.stp
+    #path: ../geom/cylinder_convex_end.stp
+    #path: ../geom/cylinder_nozzle_spline.stp
+    path: ../geom/cylinder_convex_to_flat.stp
     #path: ../geom/cylinder.stp
-    path: ../geom/chamberTestShape.stp
+    #path: ../geom/chamberTestShape.stp
+    #path: ../geom/chamberTestShape2.stp
     #path: ../geom/CombustionChamberV4.stp
     # Options to be applied to the volumetric geometry
     options:
-      dm_refine: 1
+      dm_refine: 2
       dm_plex_check_all: true
     modifiers:
       # label all boundary faces as "marker" to allow extruding
@@ -58,16 +63,16 @@ timestepper:
       - !ablate::domain::modifiers::CreateLabel
         region:
           name: inletBoundaryCells
-        #function: "z < 0 ? 1.0 : 0"
-        function: "x < 0 ? 1.0 : 0"
+        function: "z < 0 ? 1.0 : 0"
+        #function: "x < 0 ? 1.0 : 0"
         #function: "x < 0 ? 1.0 : 0"
 
       # repeat for the outlet
       - !ablate::domain::modifiers::CreateLabel
         region:
           name: outletBoundaryCells
-        #function: "z > 0.1 ? 1.0 : 0"
-        function: "x > 1.6 ? 1.0 : 0"
+        function: "z > 0.1 ? 1.0 : 0"
+        #function: "x > 1.6 ? 1.0 : 0"
         #function: "x > 2.105 ? 1.0 : 0"
 
       # create a wall boundary that is all boundary cells minus inlet/outlet
@@ -147,10 +152,10 @@ solvers:
     monitors:
       # output time step information for each time step
       - !ablate::monitors::TimeStepMonitor
-        interval: 5
+        interval: 1
       - !ablate::monitors::MaxMinAverage
         field: velocity
-        interval: 5
+        interval: 1
 
   # use a boundary solver to update the cells in the wallBoundaryCells region to represent standard wall
   - !ablate::boundarySolver::BoundarySolver

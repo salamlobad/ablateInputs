@@ -22,11 +22,9 @@ timestepper:
     lower: [ 0.0, -0.2, -0.2]
     upper: [1.88, 0.2, 0.2]
     simplex: false
+    dm_refine: 0 #this must be zero
+    dm_partition_view: 1
     preModifiers:
-      - !ablate::domain::modifiers::SetFromOptions
-        dm_refine: 0 #this must be zero
-        dm_partition_view: 1
-      #        dm_label_view: interiorFlowRegion
       - !ablate::domain::modifiers::DistributeWithGhostCells
         ghostCellDepth: 3
     postModifiers:

@@ -1,4 +1,0 @@
-time: 0.0011000000000000001
-dt: 0.0027128144403855332
-timeStep: 2
-sequenceNumber: 2

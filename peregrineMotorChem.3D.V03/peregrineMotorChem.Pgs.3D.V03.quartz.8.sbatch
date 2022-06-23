@@ -29,22 +29,13 @@ export PATH="${PETSC_DIR}/${PETSC_ARCH}/bin:$PATH"
 mkdir tmp_$SLURM_JOBID
 cd tmp_$SLURM_JOBID
 
-export TITLE=2Dn128_half_G02
+export TITLE=3Dn8
 export VELOCITY=".212175*min(1,20*t),0"
-
-# export TITLE=2Dn128_half_G20
-# export VELOCITY="16.967126*min(1,20*t),0.0"
- 
-# export TITLE=2Dn128_half_G50
-# export VELOCITY="42.417815*min(1,20*t),0.0"
- 
-# export TITLE=2Dn128_half_G100
-# export VELOCITY="84.835630*min(1,20*t),0.0"
 
 ##### Launch parallel job using srun
 srun -n288 /g/g20/lobad1/ablateOpt/ablate \
 	--input /p/lustre1/lobad1/ablateInputs/peregrineMotorChem.3D.V02/peregrineMotor.Pgs.3D.V02.yaml \
-	-yaml::environment::title 2Dn128_half_G02 \
+	-yaml::environment::title 3Dn8 \
 	-yaml::solvers::[1]::processes::[0]::velocity ".212175*min(1,20*t),0" \
 	-yaml::timestepper::arguments::ts_max_steps 250 # 1000000 \
 	-yaml::timestepper::domain::faces [120,18,18]
