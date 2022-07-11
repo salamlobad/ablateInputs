@@ -10,17 +10,21 @@ timestepper:
   arguments:
     ts_type: rk
     ts_max_time: 100000
-    ts_max_steps: 1
+    ts_max_steps: 5
     ts_dt: 1.0E-10 # 1.0E-10
     ts_adapt_safety: 0.9
   # io controls how often the results are saved to a file for visualization and restart
-  io:
-    interval: 0 # results are saved at every step.  In real simulations this should be much larger.
+#  io:
+#    interval: 0 # results are saved at every step.  In real simulations this should be much larger.
 
   # load in a cad file directly and then create a surface mesh then volumetric mesh from the cad geometry
   domain: !ablate::domain::MeshFile
     name: exampleNozzle
-    path: ../geom/CombustionChamberV4_test.msh
+    #path: ../geom/rectangle2d_2022_07_11_inverted_test_fix.msh
+    #path: ../geom/cylinder3d_test2.msh
+    #path: ../geom/chamberTestShape2.msh
+    path: ../geom/CombustionChamberV4.msh
+    #path: ../geom/cylinder2D_xy_2cell_test_fixed.msh
     #path: ../geom/cylinder3d.msh
   #domain: !ablate::domain::CadFile
     #name: exampleNozzle
@@ -61,8 +65,8 @@ timestepper:
       - !ablate::domain::modifiers::CreateLabel
         region:
           name: inletBoundaryCells
-        #function: "z < 0 ? 1.0 : 0"
-        function: "x < 0 ? 1.0 : 0"
+        function: "z < 0 ? 1.0 : 0"
+        #function: "x < 0 ? 1.0 : 0"
         #function: "x < 0 ? 1.0 : 0"
 
       # repeat for the outlet
@@ -71,7 +75,8 @@ timestepper:
           name: outletBoundaryCells
         #function: "z > 0.1 ? 1.0 : 0"
         #function: "x > 1.6 ? 1.0 : 0"
-        function: "x > 2.105 ? 1.0 : 0"
+        function: "z > 0.5 ? 1.0 : 0"
+        #function: "x > 2.105 ? 1.0 : 0"
 
       # create a wall boundary that is all boundary cells minus inlet/outlet
       - !ablate::domain::modifiers::SubtractLabel

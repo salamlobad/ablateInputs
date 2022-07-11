@@ -23,7 +23,8 @@ timestepper:
     #path: ../geom/rectangle2d_refined.msh
     #path: ../geom/testChamberShape1_2d.msh
     #path: ../geom/combustionChamber2d.msh
-    path: ../geom/cylinder2d_unrefined.msh
+    #path: ../geom/cylinder2d_unrefined.msh
+    path: ../geom/cylinder2D_xy_2cell_flipped_test.msh
     #path: ../geom/combustionChamber2d_refined.msh
     # Options to be applied to the volumetric geometry
     options:

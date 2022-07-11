@@ -13,15 +13,16 @@ timestepper:
     ts_dt: 1.0E-10
     ts_adapt_safety: 0.9
   # io controls how often the results are saved to a file for visualization and restart
-  io:
-    interval: 0 # results are saved at every step.  In real simulations this should be much larger.
+#  io:
+#    interval: 0 # results are saved at every step.  In real simulations this should be much larger.
 
   # load in a mesh file
   domain: !ablate::domain::MeshFile
     name: exampleNozzle
     #path: ../geom/CombustionChamberV4.msh
-    path: ../geom/CombustionChamberV4_test.msh
-    path: ../geom/cylinder3d.msh
+    #path: ../geom/CombustionChamberV4_test.msh
+    #path: ../geom/cylinder3d.msh
+    path: ../geom/cylinder2D_xy_2cell_test_fixed.msh
     # Options to be applied to the volumetric geometry
     options:
       dm_refine: 0
@@ -111,12 +112,13 @@ timestepper:
         eos: *eos
         pressure: 101325.0
         temperature: 300
-        velocity: !ablate::mathFunctions::geom::Cylinder
-          start: [ -1, 0.0, 0.0 ]
-          end: [ .05, 0.0, 0.0 ]
-          radius: 0.005
-          insideValues: "100.0, 0.0, 0.0"
-          outsideValues: "0.0, 0.0, 0.0"
+        velocity: "100.0 , 0.0, 0.0"
+#        velocity: !ablate::mathFunctions::geom::Cylinder
+#          start: [ -1, 0.0, 0.0 ]
+#          end: [ .05, 0.0, 0.0 ]
+#          radius: 0.005
+#          insideValues: "100.0, 0.0, 0.0"
+#          outsideValues: "0.0, 0.0, 0.0"
 
     # when extruding from a tet mesh, the boundary cells must be explicitly set as well
     - !ablate::finiteVolume::fieldFunctions::Euler
