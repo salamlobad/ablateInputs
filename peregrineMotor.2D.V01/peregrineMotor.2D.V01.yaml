@@ -9,6 +9,18 @@ timestepper:
   arguments:
     ts_type: rk
     ts_max_time: 1000000
+<<<<<<< HEAD
+    ts_max_steps: 25
+    ts_dt: 1.0E-10
+    ts_adapt_safety: 0.9
+  # io controls how often the results are saved to a file for visualization and restart
+  io:
+    interval: 0 # results are saved at every step.  In real simulations this should be much larger.
+  # load in a mesh file
+  domain: !ablate::domain::MeshFile
+    name: exampleNozzle
+    path: ../geom/combustionChamber2d_refinedv3.msh
+=======
     ts_max_steps: 1500
     ts_dt: 1.0E-5
     ts_adapt_safety: 0.9
@@ -19,6 +31,7 @@ timestepper:
   domain: !ablate::domain::MeshFile
     name: exampleNozzle
     path: ../geom/combustionChamber2d_refinedv2.msh
+>>>>>>> 6cd52238299b66f66971cd18f2a85a7fafcb7567
     # Options to be applied to the volumetric geometry
     options:
       dm_refine: 0
@@ -89,9 +102,15 @@ timestepper:
         rightRegion:
           name: fuelGrainCells
         boundaryFaceRegion:
+<<<<<<< HEAD
+          name: fuelGrainBoundaryFaces
+        rightBoundaryCellRegion:
+          name: fuelGrainBoundaryCells
+=======
           name: fuelGrainBoundaryCells
         rightBoundaryCellRegion:
           name: fuelGrainBoundaryFaces
+>>>>>>> 6cd52238299b66f66971cd18f2a85a7fafcb7567
 #      # Remove the fuelGrainBoundaryFaces from the flow region, necessary for sublimation surfaces
       - !ablate::domain::modifiers::SubtractLabel
         differenceRegion:
@@ -141,8 +160,13 @@ timestepper:
         eos: *eos
         pressure: 101325.0
         temperature: !ablate::mathFunctions::geom::Sphere
+<<<<<<< HEAD
+          center: [0.125, 0.0]
+          radius: 0.1
+=======
           center: [0.05, 0.0]
           radius: 0.025
+>>>>>>> 6cd52238299b66f66971cd18f2a85a7fafcb7567
           insideValues: [1500]
           outsideValues: [298.15]
         velocity: "0, 0"
@@ -236,7 +260,11 @@ solvers:
           name: outletFlowCells
         fieldBoundary:
           name: outletBoundaryFaces
+<<<<<<< HEAD
+        interval: 0
+=======
         interval: 5
+>>>>>>> 6cd52238299b66f66971cd18f2a85a7fafcb7567
         log: !ablate::monitors::logs::CsvLog
           name: testLog.csv
   # use a boundary solver enforce an inlet
@@ -291,8 +319,32 @@ solvers:
         transportModel: *transportModel
         pgs: *pgs
         eos: *eos
+<<<<<<< HEAD
+#        additionalHeatFlux: !ablate::mathFunctions::geom::Sphere
+#          center: [ 0.05, 0, 0 ]
+#          radius: 0.05
+#          insideValues: "t < .06? 250000 : 0.0 "# 150 KW/m2
+        additionalHeatFlux: !ablate::mathFunctions::geom::Union
+          geometries:
+#            - !ablate::mathFunctions::geom::Sphere # sphere touching lower half of fuel grain
+#              center: [ 0.09, -0.115, 0 ] # 0.1125
+#              radius: 0.025
+#            - !ablate::mathFunctions::geom::Sphere # sphere touching upper half of fuel grain
+#              center: [ 0.09, 0.115, 0 ]
+#              radius: 0.025
+            - !ablate::mathFunctions::geom::Cylinder # cylinder along lower half of fuel grain
+              start: [ 0.08, -0.115, 0 ]
+              end: [ 1.86, -0.115, 0 ]
+              radius: 0.025
+            - !ablate::mathFunctions::geom::Cylinder # cylinder along upper half of fuel grain
+              start: [ 0.08, 0.115, 0 ]
+              end: [ 1.86, 0.115, 0 ]
+              radius: 0.025
+          insideValues: "t < .06? 500000 : 0.0 "# 150 KW/m2
+=======
         additionalHeatFlux: !ablate::mathFunctions::geom::Sphere
           center: [ 0.05, 0, 0 ]
           radius: 0.05
           insideValues: "t < .06? 250000 : 0.0 "# 150 KW/m2
+>>>>>>> 6cd52238299b66f66971cd18f2a85a7fafcb7567
         massFractions: *fuelMassFrac
