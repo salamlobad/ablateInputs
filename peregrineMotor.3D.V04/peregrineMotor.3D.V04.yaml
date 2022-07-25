@@ -23,7 +23,7 @@ timestepper:
     #path: ../geom/cylinder_convex_end.stp
     #path: ../geom/cylinder_nozzle_spline.stp
     #path: ../geom/cylinder_convex_to_flat.stp
-    path: ../geom/cylinder.stp
+#    path: ../geom/cylinder.stp
     #path: ../geom/chamberTestShape.stp
     #path: ../geom/chamberTestShape2.stp
     #path: ../geom/CombustionChamberV4.stp
