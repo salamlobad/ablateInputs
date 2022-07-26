@@ -9,7 +9,7 @@ timestepper:
   arguments:
     ts_type: rk
     ts_max_time: 100000
-    ts_max_steps: 15
+    ts_max_steps: 500
     ts_dt: 1.0E-10
     ts_adapt_safety: 0.9
   # io controls how often the results are saved to a file for visualization and restart
@@ -39,14 +39,15 @@ timestepper:
       - !ablate::domain::modifiers::CompleteLabel
         region:
           name: chamberWalls
+
       # the DmViewFromOptions "modifier" does not modify the dm but outputs. Used to examine dm for errors
-      - !ablate::monitors::DmViewFromOptions
-        options: ascii
-      - !ablate::monitors::DmViewFromOptions
-        options: ascii::ascii_info_detail
-      - !ablate::monitors::DmViewFromOptions
-        options: ":$OutputDirectory/mesh_pre_modifiers.tex:ascii_latex"
-      #  the $OutputDirectory is a special keyword that gets parsed by ablate to update to the output directory
+#      - !ablate::monitors::DmViewFromOptions
+#        options: ascii
+#      - !ablate::monitors::DmViewFromOptions
+#        options: ascii::ascii_info_detail
+#      - !ablate::monitors::DmViewFromOptions
+#        options: ":$OutputDirectory/mesh_pre_modifiers.tex:ascii_latex"
+
       # test extrusion
       - !ablate::domain::modifiers::ExtrudeLabel
         # extrude the boundary cells marked
@@ -74,16 +75,6 @@ timestepper:
       # if using mpi, this modifier distributes cells
       - !ablate::domain::modifiers::DistributeWithGhostCells
         ghostCellDepth: 2
-
-      # example 2: create a wall boundary that is all boundary cells minus inlet/outlet
-      - !ablate::domain::modifiers::SubtractLabel
-        differenceRegion:
-          name: wallBoundaryCells
-        minuendRegion:
-          name: boundaryCells
-        subtrahendRegions:
-          - name: inlet
-          - name: outlet
 
       #define the boundary between the flow region and the fuel grain
       - !ablate::domain::modifiers::TagLabelInterface
@@ -116,13 +107,12 @@ timestepper:
         leftBoundaryCellRegion:
           name: outletFlowCells
 
-
-      - !ablate::monitors::DmViewFromOptions
-        options: ascii
-      - !ablate::monitors::DmViewFromOptions
-        options: ascii::ascii_info_detail
-      - !ablate::monitors::DmViewFromOptions
-        options: ":$OutputDirectory/mesh_post_modifiers.tex:ascii_latex"
+#      - !ablate::monitors::DmViewFromOptions
+#        options: ascii
+#      - !ablate::monitors::DmViewFromOptions
+#        options: ascii::ascii_info_detail
+#      - !ablate::monitors::DmViewFromOptions
+#        options: ":$OutputDirectory/mesh_post_modifiers.tex:ascii_latex"
 
     fields:
       # all fields must be defined before solvers.  The ablate::finiteVolume::CompressibleFlowFields is a helper
@@ -138,8 +128,8 @@ timestepper:
         eos: *eos
         pressure: 101325.0
         temperature: !ablate::mathFunctions::geom::Sphere
-          center: [0.05, 0.0, 0.0]
-          radius: 0.025
+          center: [0.15, 0.0, 0.0]
+          radius: 0.15
           insideValues: [ 1500 ]
           outsideValues: [ 298.15 ]
         velocity: "0.0, 0.0, 0.0"
@@ -209,7 +199,7 @@ solvers:
         eos: *eos
         alphaInit: 10.0
         maxAlphaAllowed: 100.0
-        domainLength: 0.2
+        domainLength: 2.105
         log: !ablate::monitors::logs::StdOut
     # overwrite and set the time step based upon the CFL constraint
     computePhysicsTimeStep: false
@@ -243,7 +233,7 @@ solvers:
   - !ablate::boundarySolver::BoundarySolver
     id: wallBoundary
     region:
-      name: wallBoundaryCells
+      name: chamberWalls
     fieldBoundary:
       name: boundaryFaces
     mergeFaces: true
@@ -277,7 +267,7 @@ solvers:
         eos: *eos
         reflectFactor: 0.0
         referencePressure: 101325.0
-        maxAcousticsLength: 0.1
+        maxAcousticsLength: 2.105
         pgs: *pgs
 
   - !ablate::boundarySolver::BoundarySolver
@@ -292,8 +282,10 @@ solvers:
         transportModel: *transportModel
         pgs: *pgs
         eos: *eos
-        additionalHeatFlux: !ablate::mathFunctions::geom::Sphere
-          center: [ 0.05, 0, 0 ]
-          radius: 0.05
-          insideValues: "t < .06? 250000 : 0.0 "# 150 KW/m2
+        additionalHeatFlux: !ablate::mathFunctions::geom::CylinderShell #  cylindrical shell along lower half of fuel grain
+          start: [ 0.08, 0.0 ]
+          end: [ 1.86, 0.0 ]
+          radiusMin: 0.135 # actual fuel grain inner radius is 0.1375
+          radiusMax: 0.19
+          insideValues: "t < .06? 1000000 : 0.0 "# 150 KW/m2
         massFractions: *fuelMassFrac
