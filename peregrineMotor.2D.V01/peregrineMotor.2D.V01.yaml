@@ -9,7 +9,7 @@ timestepper:
   arguments:
     ts_type: rk
     ts_max_time: 1000000
-    ts_max_steps: 500
+    ts_max_steps: 150
     ts_dt: 1.0E-10
     ts_adapt_safety: 0.9
     ts_adapt_monitor: ""
@@ -20,7 +20,7 @@ timestepper:
   domain: !ablate::domain::MeshFile
     name: exampleNozzle
 #    path: ../geom/rectangle2d_2cell.msh
-    path: ../geom/combustionChamber2d_refinedv3.msh
+    path: ../geom/combustionChamber2d_refinedv4.msh
     # Options to be applied to the volumetric geometry
     options:
       dm_refine: 0
@@ -254,7 +254,7 @@ solvers:
       - !ablate::boundarySolver::lodi::Inlet
         eos: *eos
         pgs: *pgs
-        velocity: "min(15, t*4/.025) , 0.0" # t*15/.025
+        velocity: "min(50, t*50/.25) , 0.0" # t*15/.025
   # use a boundary solver allow outward flow
   - !ablate::boundarySolver::BoundarySolver
     id: outlet

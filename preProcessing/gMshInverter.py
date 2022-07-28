@@ -20,6 +20,9 @@ print("The elementTypes are: ", elementTypes)
 print("The elementTags are: ", elementTags)
 print("The nodeTags are: ", nodeTags)
 
+numElem = len(elementTags)
+print("The number of elements is: ", numElem)
+
 for l in range(len(elementTags)):
     for elementId in elementTags[l]:
         print("ElementId: ", elementId)
@@ -55,9 +58,10 @@ for l in range(len(elementTags)):
             # gmsh.model.mesh.removeDuplicateElements()
 
 # gmsh.model.mesh.renumberElements()
-gmsh.model.mesh.reorder_elements(2, 1, [1, 2, 3, 4])
+# gmsh.model.mesh.reorder_elements(2, 1, [1, 2, 3, 4])
 # gmsh.model.mesh.removeDuplicateElements()
 # gmsh.model.mesh.reverse()
+print("\nChecking elements after inverting\n")
 elementTypes, elementTags, nodeTags = gmsh.model.mesh.getElements()
 print("The elementTypes are: ", elementTypes)
 print("The elementTags are: ", elementTags)
