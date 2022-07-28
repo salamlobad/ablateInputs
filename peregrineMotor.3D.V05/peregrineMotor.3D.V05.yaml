@@ -9,16 +9,16 @@ timestepper:
   arguments:
     ts_type: rk
     ts_max_time: 100000
-    ts_max_steps: 500
+    ts_max_steps: 750
     ts_dt: 1.0E-10
     ts_adapt_safety: 0.9
   # io controls how often the results are saved to a file for visualization and restart
   io:
-    interval: 0 # results are saved at every step.  In real simulations this should be much larger.
+    interval: 10 # results are saved at every step.  In real simulations this should be much larger.
   # load in mesh file directly
   domain: !ablate::domain::MeshFile
     name: flowRegionMesh
-    path: ../geom/CombustionChamberV5_unrefinedv2.msh
+    path: ../geom/CombustionChamberV5_unrefinedv1.msh
     # Options to be applied to the volumetric geometry
     options:
       dm_refine: 0
@@ -41,12 +41,12 @@ timestepper:
           name: chamberWalls
 
       # the DmViewFromOptions "modifier" does not modify the dm but outputs. Used to examine dm for errors
-#      - !ablate::monitors::DmViewFromOptions
-#        options: ascii
-#      - !ablate::monitors::DmViewFromOptions
-#        options: ascii::ascii_info_detail
-#      - !ablate::monitors::DmViewFromOptions
-#        options: ":$OutputDirectory/mesh_pre_modifiers.tex:ascii_latex"
+      - !ablate::monitors::DmViewFromOptions
+        options: ascii
+      - !ablate::monitors::DmViewFromOptions
+        options: ascii::ascii_info_detail
+      - !ablate::monitors::DmViewFromOptions
+        options: ":$OutputDirectory/mesh_pre_modifiers.tex:ascii_latex"
 
       # test extrusion
       - !ablate::domain::modifiers::ExtrudeLabel
@@ -70,7 +70,7 @@ timestepper:
         # tag the new boundary cells for easy boundary condition specifications
         extrudedRegion:
           name: boundaryCells
-#        thickness: 0.05
+        thickness: 0.05
 
       # if using mpi, this modifier distributes cells
       - !ablate::domain::modifiers::DistributeWithGhostCells
@@ -82,10 +82,12 @@ timestepper:
           name: flowRegion
         rightRegion:
           name: fuelGrain
+          value: 34
         boundaryFaceRegion:
           name: fuelGrainBoundaryCells
         rightBoundaryCellRegion:
           name: fuelGrainBoundaryFaces
+
       # Remove the fuelGrainBoundaryFaces from the flow region, necessary for sublimation surfaces
       - !ablate::domain::modifiers::SubtractLabel
         differenceRegion:
@@ -102,6 +104,7 @@ timestepper:
           name: interiorFlowRegion
         rightRegion:
           name: outlet
+          value: 32
         boundaryFaceRegion:
           name: outletBoundaryFaces
         leftBoundaryCellRegion:
@@ -121,12 +124,19 @@ timestepper:
         eos: !ablate::eos::TChem  &eos
           mechFile: ../mechanisms/grimech30.mech.dat
           thermoFile: ../mechanisms/grimech30.thermo.dat
+      - !ablate::domain::FieldDescription
+        name: pressure
+        type: FV
+        location: aux
+        region:
+          name: domain
   # set the initial conditions of the flow field
   initialization:
     - !ablate::finiteVolume::fieldFunctions::Euler
       state: &initFlowState
         eos: *eos
         pressure: 101325.0
+#        temperature: 298.15
         temperature: !ablate::mathFunctions::geom::Sphere
           center: [0.15, 0.0, 0.0]
           radius: 0.15
@@ -192,7 +202,7 @@ solvers:
     id: vortexFlowField
     # only apply this solver to the flowRegion
     region:
-      name: flowRegion
+      name: interiorFlowRegion
     additionalProcesses:
       - !ablate::finiteVolume::processes::PressureGradientScaling
         &pgs
@@ -200,7 +210,9 @@ solvers:
         alphaInit: 10.0
         maxAlphaAllowed: 100.0
         domainLength: 2.105
-        log: !ablate::monitors::logs::StdOut
+#        log: !ablate::monitors::logs::StdOut
+      - !ablate::finiteVolume::processes::TChemReactions
+        eos: *eos
     # overwrite and set the time step based upon the CFL constraint
     computePhysicsTimeStep: false
     # a flux calculator must be specified to so solver for advection
@@ -218,7 +230,7 @@ solvers:
     monitors:
       # output time step information for each time step
       - !ablate::monitors::TimeStepMonitor
-        interval: 0
+        interval: 5
       - !ablate::monitors::RocketMonitor
         eos: *eos
         name: Outlet
@@ -226,26 +238,15 @@ solvers:
           name: outletFlowCells
         fieldBoundary:
           name: outletBoundaryFaces
-        interval: 0
-#        log: !ablate::monitors::logs::CsvLog
-#          name: testLog.csv
-  # use a boundary solver to update the cells in the wallBoundaryCells region to represent standard wall
-  - !ablate::boundarySolver::BoundarySolver
-    id: wallBoundary
-    region:
-      name: chamberWalls
-    fieldBoundary:
-      name: boundaryFaces
-    mergeFaces: true
-    processes:
-      - !ablate::boundarySolver::lodi::IsothermalWall
-        eos: *eos
-        pgs: *pgs
+        interval: 10
+        log: !ablate::monitors::logs::CsvLog
+          name: testLog.csv
   # use a boundary solver enforce an inlet
   - !ablate::boundarySolver::BoundarySolver
     id: inlet
     region:
       name: inlet
+      value: 31
     fieldBoundary:
       name: boundaryFaces
     mergeFaces: true
@@ -253,12 +254,13 @@ solvers:
       - !ablate::boundarySolver::lodi::Inlet
         eos: *eos
         pgs: *pgs
-
+        velocity: "1 , 0.0" # "min(60, t*60/.025) , 0.0"
   # use a boundary solver allow outward flow
   - !ablate::boundarySolver::BoundarySolver
     id: outlet
     region:
       name: outlet
+      value: 32
     fieldBoundary:
       name: boundaryFaces
     mergeFaces: true
@@ -269,7 +271,20 @@ solvers:
         referencePressure: 101325.0
         maxAcousticsLength: 2.105
         pgs: *pgs
-
+  # use a boundary solver to update the cells in the chamberWalls region to represent standard wall
+  - !ablate::boundarySolver::BoundarySolver
+    id: wallBoundary
+    region:
+      name: chamberWalls
+      value: 33
+    fieldBoundary:
+      name: boundaryFaces
+    mergeFaces: true
+    processes:
+      - !ablate::boundarySolver::lodi::IsothermalWall
+        eos: *eos
+        pgs: *pgs
+  # use a boundary solver to use cells in the fuelGrain region for sublimation
   - !ablate::boundarySolver::BoundarySolver
     id: grain boundary
     region:
@@ -285,7 +300,7 @@ solvers:
         additionalHeatFlux: !ablate::mathFunctions::geom::CylinderShell #  cylindrical shell along lower half of fuel grain
           start: [ 0.08, 0.0 ]
           end: [ 1.86, 0.0 ]
-          radiusMin: 0.135 # actual fuel grain inner radius is 0.1375
+          radiusMin: 0.1325 # actual fuel grain inner radius is 0.1375
           radiusMax: 0.19
-          insideValues: "t < .06? 1000000 : 0.0 "# 150 KW/m2
+          insideValues: "t < .06? 250000 : 0.0 "# 150 KW/m2
         massFractions: *fuelMassFrac
