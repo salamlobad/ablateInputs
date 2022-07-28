@@ -3,7 +3,7 @@
 
 ##### These lines are for Slurm
 #SBATCH -N 8
-#SBATCH -J 3dPeregrineV05
+#SBATCH -J 2dPeregrineV02
 #SBATCH -t 1:00:00
 #SBATCH -p pdebug
 #SBATCH --mail-type=ALL
@@ -31,9 +31,10 @@ cd tmp_$SLURM_JOBID
 
 ##### Launch parallel job using srun
 srun -n288 /g/g20/lobad1/ablateOpt/ablate \
-	--input /p/lustre1/lobad1/ablateInputs/peregrineMotorChem.3D.V05/peregrineMotor.3D.V05.yaml \
-	-yaml::environment::title 3Dn8 \
+	--input /p/lustre1/lobad1/ablateInputs/peregrineMotor.2D.V02/peregrineMotor.2D.V02.yaml \
+	-yaml::environment::title 2Dn8 \
     -yaml::timestepper::arguments::ts_max_steps 10000 \
     -yaml::timestepper::domain::options::dm_refine 0
+
 
 echo 'Done'
