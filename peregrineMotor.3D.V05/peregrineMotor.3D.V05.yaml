@@ -9,16 +9,18 @@ timestepper:
   arguments:
     ts_type: rk
     ts_max_time: 100000
-    ts_max_steps: 750
+    ts_max_steps: 500
     ts_dt: 1.0E-10
+    ts_adapt_type: none
     ts_adapt_safety: 0.9
   # io controls how often the results are saved to a file for visualization and restart
   io:
-    interval: 10 # results are saved at every step.  In real simulations this should be much larger.
+#    !ablate::io::Hdf5MultiFileSerializer
+    interval: 0 # results are saved at every step.  In real simulations this should be much larger.
   # load in mesh file directly
   domain: !ablate::domain::MeshFile
     name: flowRegionMesh
-    path: ../geom/CombustionChamberV5_unrefinedv1.msh
+    path: ../geom/CombustionChamberV5_unrefinedv1.1.msh
     # Options to be applied to the volumetric geometry
     options:
       dm_refine: 0
@@ -84,9 +86,9 @@ timestepper:
           name: fuelGrain
           value: 34
         boundaryFaceRegion:
-          name: fuelGrainBoundaryCells
-        rightBoundaryCellRegion:
           name: fuelGrainBoundaryFaces
+        rightBoundaryCellRegion:
+          name: fuelGrainBoundaryCells
 
       # Remove the fuelGrainBoundaryFaces from the flow region, necessary for sublimation surfaces
       - !ablate::domain::modifiers::SubtractLabel
@@ -142,7 +144,11 @@ timestepper:
           radius: 0.15
           insideValues: [ 1500 ]
           outsideValues: [ 298.15 ]
-        velocity: "0.0, 0.0, 0.0"
+        velocity: !ablate::mathFunctions::geom::Sphere
+          center: [0.15, 0.0, 0.0]
+          radius: 0.15
+          insideValues: " 5.0, 0.0, 0.0 "
+          outsideValues: " 0.0, 0.0, 0.0 "
         massFractions: !ablate::finiteVolume::fieldFunctions::MassFractions
           &airMassFrac
           eos: *eos
@@ -211,10 +217,10 @@ solvers:
         maxAlphaAllowed: 100.0
         domainLength: 2.105
 #        log: !ablate::monitors::logs::StdOut
-      - !ablate::finiteVolume::processes::TChemReactions
-        eos: *eos
+#      - !ablate::finiteVolume::processes::TChemReactions
+#        eos: *eos
     # overwrite and set the time step based upon the CFL constraint
-    computePhysicsTimeStep: false
+    computePhysicsTimeStep: true
     # a flux calculator must be specified to so solver for advection
     fluxCalculator: !ablate::finiteVolume::fluxCalculator::AusmpUp
       pgs: *pgs
@@ -230,17 +236,19 @@ solvers:
     monitors:
       # output time step information for each time step
       - !ablate::monitors::TimeStepMonitor
-        interval: 5
-      - !ablate::monitors::RocketMonitor
-        eos: *eos
-        name: Outlet
-        region:
-          name: outletFlowCells
-        fieldBoundary:
-          name: outletBoundaryFaces
-        interval: 10
-        log: !ablate::monitors::logs::CsvLog
-          name: testLog.csv
+        interval: 0
+      - !ablate::monitors::PhysicsTimeStep
+        interval: 0
+#      - !ablate::monitors::RocketMonitor
+#        eos: *eos
+#        name: Outlet
+#        region:
+#          name: outletFlowCells
+#        fieldBoundary:
+#          name: outletBoundaryFaces
+#        interval: 10
+#        log: !ablate::monitors::logs::CsvLog
+#          name: testLog.csv
   # use a boundary solver enforce an inlet
   - !ablate::boundarySolver::BoundarySolver
     id: inlet
@@ -254,7 +262,7 @@ solvers:
       - !ablate::boundarySolver::lodi::Inlet
         eos: *eos
         pgs: *pgs
-        velocity: "1 , 0.0" # "min(60, t*60/.025) , 0.0"
+        velocity: "min(60, t*60/.025, 5) , 0.0"
   # use a boundary solver allow outward flow
   - !ablate::boundarySolver::BoundarySolver
     id: outlet
@@ -284,8 +292,20 @@ solvers:
       - !ablate::boundarySolver::lodi::IsothermalWall
         eos: *eos
         pgs: *pgs
+#  - !ablate::radiation::Radiation
+#    id: radiation
+#    region:
+#      name: interiorCells
+#    fieldBoundary:
+#      name: boundaryFaces
+#    rays: 10
+#    properties: !ablate::eos::radiationProperties::Constant
+#      absorptivity: 1
+##      eos: *eos
+##    log: !ablate::monitors::logs::StdOut
+##      name: radlog
   # use a boundary solver to use cells in the fuelGrain region for sublimation
-  - !ablate::boundarySolver::BoundarySolver
+  - !ablate::boundarySolver::DebugBoundarySolver
     id: grain boundary
     region:
       name: fuelGrainBoundaryCells
