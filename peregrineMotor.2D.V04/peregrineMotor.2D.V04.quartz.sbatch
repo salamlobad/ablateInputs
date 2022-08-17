@@ -46,7 +46,7 @@ cd tmp_$SLURM_JOBID
 
 ##### Launch parallel job using srun
 srun -n288 /g/g20/lobad1/ablateOpt/ablate \
-        --input /p/lustre1/lobad1/ablateInputs/peregrineMotor.2D.V03/peregrineMotor.2D.V03.yaml \
+        --input /p/lustre1/lobad1/ablateInputs/peregrineMotor.2D.V04/peregrineMotor.2D.V04.yaml \
         -yaml::environment::title 2Dn1peregrineSetATestA50 \
         -yaml::timestepper::arguments::ts_max_steps 50000000 \
         -yaml::timestepper::domain::options::dm_refine 0 \
