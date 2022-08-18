@@ -23,8 +23,10 @@ timestepper:
   # load in a mesh file
   domain: !ablate::domain::MeshFile
     name: flowRegionMesh
-    path: ../geom/combustionChamber2dV03.2.msh
+    #path: ../geom/combustionChamber2dV03.2.msh
     #path: ../geom/combustionChamber2dV03.3.msh
+    path: ../geom/combustionChamber2dV03.4.msh
+    #path: ../geom/combustionChamber2dV03.5.msh
     # Options to be applied to the volumetric geometry
     options:
       dm_refine: 0
@@ -135,23 +137,11 @@ timestepper:
       state: &initFlowState
         eos: *eos
         pressure: 101325.0
-        # two initializations being explored, one large hot sphere in prechamber versus
-        #two smaller spheres touching top and bottom fuel grain
         temperature: !ablate::mathFunctions::geom::Sphere
-          center: [0.15, 0.0]
-          radius: 0.15
+          center: [0.125, 0.0]
+          radius: 0.12
           insideValues: [1500]
           outsideValues: [298.15]
-#        temperature: !ablate::mathFunctions::geom::Union
-#          geometries:
-#            - !ablate::mathFunctions::geom::Sphere # sphere touching lower half of fuel grain
-#              center: [ 0.06, -0.11, 0 ]
-#              radius: 0.05
-#            - !ablate::mathFunctions::geom::Sphere # sphere touching upper half of fuel grain
-#              center: [ 0.06, 0.11, 0 ]
-#              radius: 0.05
-#          insideValues: [1500]
-#          outsideValues: [298.15]
         velocity: "0, 0"
         massFractions: !ablate::finiteVolume::fieldFunctions::MassFractions
           &airMassFrac
@@ -272,7 +262,7 @@ solvers:
       - !ablate::boundarySolver::lodi::Inlet
         eos: *eos
         pgs: *pgs
-        velocity: "min(350, t*350/0.025) , 0.0" # "min(15, t*4/.025) , 0.0" # t*15/.025
+        velocity: "t < 0.025 ? 0 : min(42.4881033311,42.4881033311*(t-0.025)/0.1) , 0.0"
   # use a boundary solver allow outward flow
   - !ablate::boundarySolver::BoundarySolver
     id: outlet
@@ -322,15 +312,9 @@ solvers:
         transportModel: *transportModel
         pgs: *pgs
         eos: *eos
-        additionalHeatFlux: !ablate::mathFunctions::geom::Union
-          geometries:
-            - !ablate::mathFunctions::geom::Cylinder # cylinder along lower half of fuel grain
-              start: [ 0.08, -0.115, 0 ]
-              end: [ 1.86, -0.115, 0 ]
-              radius: 0.025
-            - !ablate::mathFunctions::geom::Cylinder # cylinder along upper half of fuel grain
-              start: [ 0.08, 0.115, 0 ]
-              end: [ 1.86, 0.115, 0 ]
-              radius: 0.025
-          insideValues: "t < .06? 500000 : 0.0 "# 150 KW/m2
+        additionalHeatFlux: !ablate::mathFunctions::geom::Cylinder
+          start: [ 0.0, 0.0 ]
+          end: [ 1.0, 0.0 ]
+          radius: 0.19
+          insideValues: "t < 0.1? 500000 : 0.0 "
         massFractions: *fuelMassFrac
