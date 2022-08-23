@@ -26,7 +26,6 @@ timestepper:
       dm_refine: 0
       dm_plex_check_all: true
       dm_partition_view: true
-      dm_distribute_overlap: 2
       dm_distribute: false
     modifiers:
       # label the vertices of regions with all faces labeled
