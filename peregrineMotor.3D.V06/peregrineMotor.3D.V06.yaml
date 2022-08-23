@@ -16,7 +16,7 @@ timestepper:
   # io controls how often the results are saved to a file for visualization and restart
   io:
 #    !ablate::io::Hdf5MultiFileSerializer
-    interval: 0 # results are saved at every step.  In real simulations this should be much larger.
+    interval: !ablate::io::interval::SimulationTimeInterval 0.001 # results are saved at every step.  In real simulations this should be much larger.
   # load in mesh file directly
   domain: !ablate::domain::MeshFile
     name: flowRegionMesh
@@ -27,6 +27,7 @@ timestepper:
       dm_plex_check_all: true
       dm_partition_view: true
       dm_distribute_overlap: 2
+      dm_distribute: false
     modifiers:
       # label the vertices of regions with all faces labeled
       - !ablate::domain::modifiers::CompleteLabel
@@ -71,7 +72,7 @@ timestepper:
 
       # if using mpi, this modifier distributes cells
       - !ablate::domain::modifiers::DistributeWithGhostCells
-        ghostCellDepth: 2
+        ghostCellDepth: 3
 
       #define the boundary between the flow region and the fuel grain
       - !ablate::domain::modifiers::TagLabelInterface
