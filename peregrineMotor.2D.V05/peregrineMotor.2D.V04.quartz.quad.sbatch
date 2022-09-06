@@ -2,8 +2,8 @@
 #### See https://hpc.llnl.gov/training/tutorials/slurm-and-moab#LC
 
 ##### These lines are for Slurm
-#SBATCH -N 150
-#SBATCH -J m7G10i5
+#SBATCH -N 40
+#SBATCH -J i5G10r0
 #SBATCH -t 24:00:00
 #SBATCH -p pbatch
 #SBATCH --mail-type=ALL
@@ -30,25 +30,25 @@ mkdir tmp_$SLURM_JOBID
 cd tmp_$SLURM_JOBID
 
 # G 10
-# velocity = "min(8.49762066621,8.49762066621*t/0.75) , 0.0"
+# velocity = 8.49762066621
 # G 25
-# velocity = "min(21.2440516655,21.2440516655*t/0.1) , 0.0"
+# velocity = 21.2440516655
 # G 50
-# velocity = "min(42.4881033311,42.4881033311*t/0.1) , 0.0"
+# velocity = 42.4881033311
 # G 100
-# velocity = "min(84.9762066621,84.9762066621*t/0.1) , 0.0"
+# velocity = 84.9762066621
 # G 150
-# velocity = "min(127.464309993,127.464309993*t/0.1) , 0.0"
+# velocity = 127.464309993
 # G 200
-# velocity = "min(169.952413324,169.952413324*t/0.1) , 0.0"
+# velocity = 169.952413324,
 # G 300
-# velocity = "min(254.928619986,254.928619986*t/0.1) , 0.0"
+# velocity = 254.928619986
 
 ##### Launch parallel job using srun
-srun -n5400 /g/g20/lobad1/ablateOpt/ablate \
-        --input /p/lustre1/lobad1/ablateInputs/peregrineMotor.2D.V04/peregrineMotor.2D.V04.igniter.yaml \
-        -yaml::environment::title 2Dn150peregrine_G10_quad_meshv7_ref1_ignite5_petscStepping \
+srun -n1440 /g/g20/lobad1/ablateOpt/ablate \
+        --input /p/lustre1/lobad1/ablateInputs/peregrineMotor.2D.V05/peregrineMotor.2D.V05.yaml \
+        -yaml::environment::title 2Dn40peregrine_ignite5_G10_mV4.2_ref0_petscStep \
         -yaml::timestepper::arguments::ts_max_steps 100000000 \
-        -yaml::timestepper::domain::options::dm_refine 1
+        -yaml::timestepper::domain::options::dm_refine 0
 
 echo 'Done'

@@ -10,7 +10,7 @@ timestepper:
   arguments:
     ts_type: rk
     ts_max_time: 1000000
-    ts_max_steps: 1
+    ts_max_steps: 50000000
     ts_dt: 1.0E-10
     # petsc adaptive timestepping can be turned on to replace physics timestepping
     ts_adapt_safety: 0.9
@@ -19,8 +19,8 @@ timestepper:
   # io controls how often the results are saved to a file for visualization and restart
   io:
     #  results are outputted every 0.001 seconds of real simulation time
-    #interval: !ablate::io::interval::SimulationTimeInterval 0.001
-    interval: 0
+    interval: !ablate::io::interval::SimulationTimeInterval 0.001
+#    interval: 0
   # load in a mesh file
   domain: !ablate::domain::MeshFile
     name: flowRegionMesh
@@ -275,13 +275,13 @@ solvers:
       - !ablate::boundarySolver::lodi::Inlet
         eos: *eos
         pgs: *pgs
-        #velocity: "t < 0.15 ? 2.5 : min(8.49762066621,8.49762066621*(t-0.15)/0.25+2.5) , 0.0"
+        velocity: "t < 0.15 ? 2.5 : min(8.49762066621,8.49762066621*(t-0.15)/0.25+2.5) , 0.0"
         #velocity: "t < 0.15 ? 2.5 : min(21.2440516655,21.2440516655*(t-0.15)/0.25+2.5) , 0.0"
         #velocity: "t < 0.15 ? 2.5 : min(42.4881033311,42.4881033311*(t-0.15)/0.25+2.5) , 0.0"
         #velocity: "t < 0.15 ? 2.5 : min(84.9762066621,84.9762066621*(t-0.15)/0.25+2.5) , 0.0"
         #velocity: "t < 0.15 ? 2.5 : min(127.464309993,127.464309993*(t-0.15)/0.25+2.5) , 0.0"
         #velocity: "t < 0.15 ? 2.5 : min(169.952413324,169.952413324*(t-0.15)/0.25+2.5) , 0.0"
-        velocity: "t < 0.15 ? 2.5 : min(254.928619986,254.928619986*(t-0.15)/0.25+2.5) , 0.0"
+        #velocity: "t < 0.15 ? 2.5 : min(254.928619986,254.928619986*(t-0.15)/0.25+2.5) , 0.0"
   # use a boundary solver allow outward flow
   - !ablate::boundarySolver::BoundarySolver
     id: outlet
