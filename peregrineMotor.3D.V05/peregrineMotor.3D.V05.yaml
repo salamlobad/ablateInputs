@@ -21,6 +21,8 @@ timestepper:
   domain: !ablate::domain::MeshFile
     name: flowRegionMesh
     path: ../geom/CombustionChamberV5_unrefinedv1.1.msh
+#    path: ../geom/cylinder3d_extrude_test.msh
+#    path: ../geom/CombustionChamberV5_area_test2.msh
     # Options to be applied to the volumetric geometry
     options:
       dm_refine: 0
@@ -28,6 +30,12 @@ timestepper:
       dm_partition_view: true
       dm_distribute_overlap: 2
     modifiers:
+
+#      # checks to see if any cells have negative areas
+#      - !ablate::domain::modifiers::FvmCheck
+#        expectedFaceCount: 4
+#        expectedNodeCount: 4
+      
       # label the vertices of regions with all faces labeled
       - !ablate::domain::modifiers::CompleteLabel
         region:
@@ -49,6 +57,11 @@ timestepper:
         options: ascii::ascii_info_detail
       - !ablate::monitors::DmViewFromOptions
         options: ":$OutputDirectory/mesh_pre_modifiers.tex:ascii_latex"
+
+#      # checks to see if any cells have negative areas
+#      - !ablate::domain::modifiers::FvmCheck
+#        expectedFaceCount: 4
+#        expectedNodeCount: 4
 
       # test extrusion
       - !ablate::domain::modifiers::ExtrudeLabel
@@ -73,6 +86,13 @@ timestepper:
         extrudedRegion:
           name: boundaryCells
         thickness: 0.05
+
+      # checks to see if any cells have negative areas
+      - !ablate::domain::modifiers::FvmCheck
+        region:
+          name: flowRegion
+        expectedFaceCount: 4
+        expectedNodeCount: 4
 
       # if using mpi, this modifier distributes cells
       - !ablate::domain::modifiers::DistributeWithGhostCells
@@ -317,10 +337,10 @@ solvers:
         transportModel: *transportModel
         pgs: *pgs
         eos: *eos
-        additionalHeatFlux: !ablate::mathFunctions::geom::CylinderShell #  cylindrical shell along lower half of fuel grain
-          start: [ 0.08, 0.0 ]
-          end: [ 1.86, 0.0 ]
+        additionalHeatFlux: !ablate::mathFunctions::geom::CylinderShell
+          start: [ 0.075, 0.0 ]
+          end: [ 1.9, 0.0 ]
           radiusMin: 0.1325 # actual fuel grain inner radius is 0.1375
           radiusMax: 0.19
-          insideValues: "t < .06? 250000 : 0.0 "# 150 KW/m2
+          insideValues: "t < .06? 250000 : 0.0 "
         massFractions: *fuelMassFrac

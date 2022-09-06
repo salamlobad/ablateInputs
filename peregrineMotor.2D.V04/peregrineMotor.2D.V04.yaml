@@ -10,7 +10,7 @@ timestepper:
   arguments:
     ts_type: rk
     ts_max_time: 1000000
-    ts_max_steps: 50000000
+    ts_max_steps: 1
     ts_dt: 1.0E-10
     # petsc adaptive timestepping can be turned on to replace physics timestepping
     #ts_adapt_safety: 0.9
@@ -23,9 +23,9 @@ timestepper:
   # load in a mesh file
   domain: !ablate::domain::MeshFile
     name: flowRegionMesh
-    #path: ../geom/combustionChamber2dV03.2.msh
+    path: ../geom/combustionChamber2dV03.2.msh
     #path: ../geom/combustionChamber2dV03.3.msh
-    path: ../geom/combustionChamber2dV03.4.msh
+    #path: ../geom/combustionChamber2dV03.4.msh
     #path: ../geom/combustionChamber2dV03.5.msh
     # Options to be applied to the volumetric geometry
     options:
@@ -76,6 +76,7 @@ timestepper:
       # if using mpi, this modifier distributes cells
       - !ablate::domain::modifiers::DistributeWithGhostCells
         ghostCellDepth: 2
+      # checks to see if any cells have negative areas
       - !ablate::domain::modifiers::FvmCheck
         region:
           name: flowRegion

@@ -6,15 +6,6 @@ gmsh.initialize()
 gmsh.open("/home/salaml/ablateInputs/geom/cylinder2D_xy_2cell.msh")
 # gmsh.open("/home/salaml/ablateInputs/geom/CombustionChamberV4.msh")
 
-# entities = gmsh.model.getEntities()
-# for e in entities:
-#     __, elementTags[e], __ = gmsh.model.mesh.getElements(e[0], e[1])
-# print("The elementTags are: ", elementTags)
-# nodeTags, nodeCoords, nodeParams = gmsh.model.mesh.getNodes()
-# print("The nodeTags are: ", nodeTags)
-# print("The nodeCoords are: ", nodeCoords)
-# gmsh.model.mesh.reverse()
-
 elementTypes, elementTags, nodeTags = gmsh.model.mesh.getElements()
 print("The elementTypes are: ", elementTypes)
 print("The elementTags are: ", elementTags)
@@ -44,7 +35,7 @@ for l in range(len(elementTags)):
         cross = np.cross(face1, face2)
         # print("face1:", face1)
         # print("face1:", face2)
-        # print("cross product:", cross)
+        print("cross product:", cross)
 
         # print("Norm: ", np.linalg.norm(cross))
 
@@ -58,7 +49,7 @@ for l in range(len(elementTags)):
             # gmsh.model.mesh.removeDuplicateElements()
 
 # gmsh.model.mesh.renumberElements()
-# gmsh.model.mesh.reorder_elements(2, 1, [1, 2, 3, 4])
+gmsh.model.mesh.reorder_elements(2, 1, [3, 4, 1, 2])
 # gmsh.model.mesh.removeDuplicateElements()
 # gmsh.model.mesh.reverse()
 print("\nChecking elements after inverting\n")
