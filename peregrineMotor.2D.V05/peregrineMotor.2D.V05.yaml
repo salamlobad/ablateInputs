@@ -24,7 +24,7 @@ timestepper:
   # load in a mesh file
   domain: !ablate::domain::MeshFile
     name: flowRegionMesh
-    path: ../geom/combustionChamber2dV04.2.msh
+    path: ../geom/combustionChamber2dV04.4.msh
     # Options to be applied to the volumetric geometry
     options:
       dm_refine: 0
@@ -119,7 +119,8 @@ timestepper:
           mechFile: ../mechanisms/grimech30.mech.dat
           thermoFile: ../mechanisms/grimech30.thermo.dat
         conservedFieldOptions:
-          petscfv_type: upwind
+          petscfv_type: leastsquares
+          # petscfv_type: upwind
       - !ablate::domain::FieldDescription
         name: pressure
         type: FV
@@ -134,27 +135,27 @@ timestepper:
         pressure: 101325.0
         temperature: !ablate::mathFunctions::geom::Union
           geometries:
-            - !ablate::mathFunctions::geom::Cylinder # cylinder near lower half of fuel grain
-              start: [ 0.05, -0.16, 0 ]
-              end: [ 0.065, -0.13, 0 ]
-              radius: 0.0075
-            - !ablate::mathFunctions::geom::Cylinder # cylinder near upper half of fuel grain
-              start: [ 0.05, 0.16, 0 ]
-              end: [ 0.065, 0.13, 0 ]
-              radius: 0.0075
+            - !ablate::mathFunctions::geom::Cylinder
+              start: [0.06, -0.18, 0]
+              end: [0.065, -0.13, 0]
+              radius: 0.007
+            - !ablate::mathFunctions::geom::Cylinder
+              start: [0.06, 0.18, 0]
+              end: [0.065, 0.13, 0]
+              radius: 0.007
           insideValues: [1500]
           outsideValues: [298.15]
         velocity: !ablate::mathFunctions::geom::Union
           geometries:
-            - !ablate::mathFunctions::geom::Cylinder # cylinder near lower half of fuel grain
-              start: [ 0.05, -0.16, 0 ]
-              end: [ 0.065, -0.13, 0 ]
-              radius: 0.0075
-            - !ablate::mathFunctions::geom::Cylinder # cylinder near upper half of fuel grain
-              start: [ 0.05, 0.16, 0 ]
-              end: [ 0.065, 0.13, 0 ]
-              radius: 0.0075
-          insideValues: " 2.5 , 0.0 "
+            - !ablate::mathFunctions::geom::Cylinder
+              start: [0.06, -0.18, 0]
+              end: [0.065, -0.13, 0]
+              radius: 0.007
+            - !ablate::mathFunctions::geom::Cylinder
+              start: [0.06, 0.18, 0]
+              end: [0.065, 0.13, 0]
+              radius: 0.007
+          insideValues: " 2.0 , 0.0 "
           outsideValues: " 0.0 , 0.0 "
         massFractions: !ablate::finiteVolume::fieldFunctions::MassFractions
           &airMassFrac
@@ -240,17 +241,17 @@ solvers:
     monitors:
       # output time step information
       - !ablate::monitors::TimeStepMonitor
-        interval: 0
+        interval: 5
       # output cfl information
       - !ablate::monitors::PhysicsTimeStep
-        interval: 0
+        interval: 5
       # output turbulent flow statistics
-      - !ablate::monitors::TurbFlowStats
-        fields:
-          - velocity
-          - temperature
-        eos: *eos
-        interval: 0
+#      - !ablate::monitors::TurbFlowStats
+#        fields:
+#          - velocity
+#          - temperature
+#        eos: *eos
+#        interval: 50000
       # output rocket performance metrics
       - !ablate::monitors::RocketMonitor
         eos: *eos
@@ -259,7 +260,7 @@ solvers:
           name: outletFlowCells
         fieldBoundary:
           name: outletBoundaryFaces
-        interval: 0
+        interval: 10000
         log: !ablate::monitors::logs::CsvLog
           name: testLog.csv
   # use a boundary solver enforce an inlet
@@ -275,10 +276,10 @@ solvers:
       - !ablate::boundarySolver::lodi::Inlet
         eos: *eos
         pgs: *pgs
-        velocity: "t < 0.15 ? 2.5 : min(8.49762066621,8.49762066621*(t-0.15)/0.25+2.5) , 0.0"
+        #velocity: "t < 0.15 ? 2.5 : min(8.49762066621,8.49762066621*(t-0.15)/0.25+2.5) , 0.0"
         #velocity: "t < 0.15 ? 2.5 : min(21.2440516655,21.2440516655*(t-0.15)/0.25+2.5) , 0.0"
         #velocity: "t < 0.15 ? 2.5 : min(42.4881033311,42.4881033311*(t-0.15)/0.25+2.5) , 0.0"
-        #velocity: "t < 0.15 ? 2.5 : min(84.9762066621,84.9762066621*(t-0.15)/0.25+2.5) , 0.0"
+        velocity: "t < 0.15 ? 2.5 : min(84.9762066621,84.9762066621*(t-0.15)/0.25+2.5) , 0.0"
         #velocity: "t < 0.15 ? 2.5 : min(127.464309993,127.464309993*(t-0.15)/0.25+2.5) , 0.0"
         #velocity: "t < 0.15 ? 2.5 : min(169.952413324,169.952413324*(t-0.15)/0.25+2.5) , 0.0"
         #velocity: "t < 0.15 ? 2.5 : min(254.928619986,254.928619986*(t-0.15)/0.25+2.5) , 0.0"
