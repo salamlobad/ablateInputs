@@ -297,18 +297,19 @@ solvers:
         referencePressure: 101325.0
         maxAcousticsLength: 2.105
         pgs: *pgs
-#  - !ablate::radiation::VolumeRadiation
-#    id: radiation
-#    eos: *eos
-#    region:
-#      name: interiorFlowRegion
-#    fieldBoundary:
-#      name: boundaryFaces
-#    rays: 10
-#    properties: !ablate::eos::radiationProperties::Zimmer
-#      eos: *eos
-#    log: !ablate::monitors::logs::StdOut
-#      name: radlog
+  - !ablate::radiation::VolumeRadiation
+    id: radiation
+    eos: *eos
+    region:
+      name: interiorFlowRegion
+    fieldBoundary:
+      name: boundaryFaces
+    rays: 10
+    interval: 0
+    properties: !ablate::eos::radiationProperties::Zimmer
+      eos: *eos
+    log: !ablate::monitors::logs::StdOut
+      name: radlog
   # use a boundary solver to update the cells in the wallBoundaryCells region to represent standard wall
   - !ablate::boundarySolver::BoundarySolver
     id: chamberWallBoundary
