@@ -9,33 +9,32 @@ timestepper:
   arguments:
     ts_type: rk
     ts_max_time: 100000
-    ts_max_steps: 500
+    ts_max_steps: 5000000
     ts_dt: 1.0E-10
-    ts_adapt_type: none
+    # petsc adaptive timestepping can be turned on to replace physics timestepping
     ts_adapt_safety: 0.9
+    ts_adapt_monitor: ""
+    #ts_adapt_type: none
   # io controls how often the results are saved to a file for visualization and restart
   io:
-#    !ablate::io::Hdf5MultiFileSerializer
+#    interval: !ablate::io::interval::SimulationTimeInterval 0.001
     interval: 0 # results are saved at every step.  In real simulations this should be much larger.
   # load in mesh file directly
   domain: !ablate::domain::MeshFile
     name: flowRegionMesh
-    path: ../geom/CombustionChamberV5_unrefinedv1.1.msh
+#    path: ../geom/CombustionChamberV5_unrefinedv1.1.msh
 #    path: ../geom/cylinder3d_extrude_test.msh
-#    path: ../geom/CombustionChamberV5_area_test2.msh
+#    path: ../geom/combustionChamberV5_algorithimTests.msh
+    path: ../geom/combustionChamberV5_algorithimTests_working3.msh
+#    path: ../geom/combustionChamberV5_algorithimTests_Delaunay.msh
+#    path: ../geom/combustionChamberV5_algorithimTests_Frontal.msh
     # Options to be applied to the volumetric geometry
     options:
-      dm_refine: 0
+      dm_refine: 1
       dm_plex_check_all: true
       dm_partition_view: true
       dm_distribute_overlap: 2
     modifiers:
-
-#      # checks to see if any cells have negative areas
-#      - !ablate::domain::modifiers::FvmCheck
-#        expectedFaceCount: 4
-#        expectedNodeCount: 4
-      
       # label the vertices of regions with all faces labeled
       - !ablate::domain::modifiers::CompleteLabel
         region:
@@ -58,34 +57,29 @@ timestepper:
       - !ablate::monitors::DmViewFromOptions
         options: ":$OutputDirectory/mesh_pre_modifiers.tex:ascii_latex"
 
-#      # checks to see if any cells have negative areas
-#      - !ablate::domain::modifiers::FvmCheck
-#        expectedFaceCount: 4
-#        expectedNodeCount: 4
-
-      # test extrusion
+      # label all boundary faces as "marker" to allow extruding
+      - !ablate::domain::modifiers::TagMeshBoundaryFaces
+        region:
+          name: marker
+      # extrude all boundaries to add needed ghost cells for the boundary solver
       - !ablate::domain::modifiers::ExtrudeLabel
         # extrude the boundary cells marked
         regions:
-          # for the 3d combustion chamber
-          - name: inlet
-            value: 31
-          - name: outlet
-            value: 32
-          - name: fuelGrain
-            value: 34
-          - name: chamberWalls
-            value: 33
+          - name: marker
         # mark all the resulting boundary faces with boundaryFaces label
         boundaryRegion:
           name: boundaryFaces
-        # tag the original mesh as the flow region
+        # tag the original mesh as the flow regions
         originalRegion:
           name: flowRegion
         # tag the new boundary cells for easy boundary condition specifications
         extrudedRegion:
           name: boundaryCells
-        thickness: 0.05
+        thickness: 0.001
+
+      # if using mpi, this modifier distributes cells
+      - !ablate::domain::modifiers::DistributeWithGhostCells
+        ghostCellDepth: 3
 
       # checks to see if any cells have negative areas
       - !ablate::domain::modifiers::FvmCheck
@@ -93,10 +87,6 @@ timestepper:
           name: flowRegion
         expectedFaceCount: 4
         expectedNodeCount: 4
-
-      # if using mpi, this modifier distributes cells
-      - !ablate::domain::modifiers::DistributeWithGhostCells
-        ghostCellDepth: 2
 
       #define the boundary between the flow region and the fuel grain
       - !ablate::domain::modifiers::TagLabelInterface
@@ -126,7 +116,7 @@ timestepper:
           name: interiorFlowRegion
         rightRegion:
           name: outlet
-          value: 32
+          value: 35
         boundaryFaceRegion:
           name: outletBoundaryFaces
         leftBoundaryCellRegion:
@@ -146,6 +136,9 @@ timestepper:
         eos: !ablate::eos::TChem  &eos
           mechFile: ../mechanisms/grimech30.mech.dat
           thermoFile: ../mechanisms/grimech30.thermo.dat
+        conservedFieldOptions:
+          petscfv_type: leastsquares
+          # petscfv_type: upwind
       - !ablate::domain::FieldDescription
         name: pressure
         type: FV
@@ -158,17 +151,30 @@ timestepper:
       state: &initFlowState
         eos: *eos
         pressure: 101325.0
-#        temperature: 298.15
-        temperature: !ablate::mathFunctions::geom::Sphere
-          center: [0.15, 0.0, 0.0]
-          radius: 0.15
-          insideValues: [ 1500 ]
-          outsideValues: [ 298.15 ]
-        velocity: !ablate::mathFunctions::geom::Sphere
-          center: [0.15, 0.0, 0.0]
-          radius: 0.15
-          insideValues: " 5.0, 0.0, 0.0 "
-          outsideValues: " 0.0, 0.0, 0.0 "
+        temperature: !ablate::mathFunctions::geom::Union
+          geometries:
+            - !ablate::mathFunctions::geom::Cylinder
+              start: [0.06, -0.18, 0]
+              end: [0.065, -0.13, 0]
+              radius: 0.007
+            - !ablate::mathFunctions::geom::Cylinder
+              start: [0.06, 0.18, 0]
+              end: [0.065, 0.13, 0]
+              radius: 0.0075
+          insideValues: [1500]
+          outsideValues: [298.15]
+        velocity: !ablate::mathFunctions::geom::Union
+          geometries:
+            - !ablate::mathFunctions::geom::Cylinder
+              start: [0.06, -0.18, 0]
+              end: [0.065, -0.13, 0]
+              radius: 0.007
+            - !ablate::mathFunctions::geom::Cylinder
+              start: [0.06, 0.18, 0]
+              end: [0.065, 0.13, 0]
+              radius: 0.0075
+          insideValues: " 2.0 , 0.0 , 0.0 "
+          outsideValues: " 0.0 , 0.0 , 0.0 "
         massFractions: !ablate::finiteVolume::fieldFunctions::MassFractions
           &airMassFrac
           eos: *eos
@@ -233,12 +239,12 @@ solvers:
       - !ablate::finiteVolume::processes::PressureGradientScaling
         &pgs
         eos: *eos
-        alphaInit: 10.0
+        alphaInit: 1.0
         maxAlphaAllowed: 100.0
         domainLength: 2.105
-#        log: !ablate::monitors::logs::StdOut
-#      - !ablate::finiteVolume::processes::TChemReactions
-#        eos: *eos
+        log: !ablate::monitors::logs::StdOut
+      - !ablate::finiteVolume::processes::TChemReactions
+        eos: *eos
     # overwrite and set the time step based upon the CFL constraint
     computePhysicsTimeStep: true
     # a flux calculator must be specified to so solver for advection
@@ -254,27 +260,36 @@ solvers:
       &transportModel
       eos: *eos
     monitors:
-      # output time step information for each time step
+      # output time step information
       - !ablate::monitors::TimeStepMonitor
-        interval: 0
+        interval: 5
+      # output cfl information
       - !ablate::monitors::PhysicsTimeStep
-        interval: 0
-#      - !ablate::monitors::RocketMonitor
+        interval: 5
+      # output turbulent flow statistics
+#      - !ablate::monitors::TurbFlowStats
+#        fields:
+#          - velocity
+#          - temperature
 #        eos: *eos
-#        name: Outlet
-#        region:
-#          name: outletFlowCells
-#        fieldBoundary:
-#          name: outletBoundaryFaces
-#        interval: 10
-#        log: !ablate::monitors::logs::CsvLog
-#          name: testLog.csv
+#        interval: 50000
+      # output rocket performance metrics
+      - !ablate::monitors::RocketMonitor
+        eos: *eos
+        name: Outlet
+        region:
+          name: outletFlowCells
+        fieldBoundary:
+          name: outletBoundaryFaces
+        interval: 10000
+        log: !ablate::monitors::logs::CsvLog
+          name: testLog.csv
   # use a boundary solver enforce an inlet
   - !ablate::boundarySolver::BoundarySolver
     id: inlet
     region:
       name: inlet
-      value: 31
+      value: 32
     fieldBoundary:
       name: boundaryFaces
     mergeFaces: true
@@ -282,13 +297,19 @@ solvers:
       - !ablate::boundarySolver::lodi::Inlet
         eos: *eos
         pgs: *pgs
-        velocity: "min(60, t*60/.025, 5) , 0.0"
+        #velocity: "t < 0.15 ? 2.5 : min(8.49762066621,8.49762066621*(t-0.15)/0.25+2.5) , 0.0"
+        #velocity: "t < 0.15 ? 2.5 : min(21.2440516655,21.2440516655*(t-0.15)/0.25+2.5) , 0.0"
+        #velocity: "t < 0.15 ? 2.5 : min(42.4881033311,42.4881033311*(t-0.15)/0.25+2.5) , 0.0"
+        velocity: "t < 0.15 ? 2.5 : min(84.9762066621,84.9762066621*(t-0.15)/0.25+2.5) , 0.0"
+        #velocity: "t < 0.15 ? 2.5 : min(127.464309993,127.464309993*(t-0.15)/0.25+2.5) , 0.0"
+        #velocity: "t < 0.15 ? 2.5 : min(169.952413324,169.952413324*(t-0.15)/0.25+2.5) , 0.0"
+        #velocity: "t < 0.15 ? 2.5 : min(254.928619986,254.928619986*(t-0.15)/0.25+2.5) , 0.0"
   # use a boundary solver allow outward flow
   - !ablate::boundarySolver::BoundarySolver
     id: outlet
     region:
       name: outlet
-      value: 32
+      value: 35
     fieldBoundary:
       name: boundaryFaces
     mergeFaces: true
@@ -319,13 +340,13 @@ solvers:
 #    fieldBoundary:
 #      name: boundaryFaces
 #    rays: 10
+#    interval: 100
 #    properties: !ablate::eos::radiationProperties::Constant
 #      absorptivity: 1
-##      eos: *eos
 ##    log: !ablate::monitors::logs::StdOut
 ##      name: radlog
   # use a boundary solver to use cells in the fuelGrain region for sublimation
-  - !ablate::boundarySolver::DebugBoundarySolver
+  - !ablate::boundarySolver::BoundarySolver
     id: grain boundary
     region:
       name: fuelGrainBoundaryCells
@@ -337,10 +358,9 @@ solvers:
         transportModel: *transportModel
         pgs: *pgs
         eos: *eos
-        additionalHeatFlux: !ablate::mathFunctions::geom::CylinderShell
-          start: [ 0.075, 0.0 ]
-          end: [ 1.9, 0.0 ]
-          radiusMin: 0.1325 # actual fuel grain inner radius is 0.1375
-          radiusMax: 0.19
-          insideValues: "t < .06? 250000 : 0.0 "
+        additionalHeatFlux: !ablate::mathFunctions::geom::Cylinder
+          start: [ 0.0, 0.0 ]
+          end: [ 0.35, 0.0 ]
+          radius: 0.19
+          insideValues: "t < 1.0 ? 250000 : 0.0 "
         massFractions: *fuelMassFrac
