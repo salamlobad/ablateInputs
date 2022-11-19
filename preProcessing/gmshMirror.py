@@ -4,7 +4,7 @@ import math
 
 gmsh.initialize()
 # gmsh.open("../geom/combustionChamber2dV04.1.msh")
-gmsh.open("combustionChamber2dV04.4.bottom.msh")
+gmsh.open("combustionChamber2dV04.5.bottom.msh")
 
 elementTypes, elementTags, nodeTags = gmsh.model.mesh.getElements()
 print("The elementTypes are: ", elementTypes)
@@ -44,7 +44,7 @@ transform(m, 500, 100000, 100000, 1, -1, 1)
 # remove the duplicate nodes that will have been created on the internal
 # boundaries
 gmsh.model.mesh.removeDuplicateNodes()
-gmsh.write('combustionChamber2dV04.4.mirrored.msh')
+gmsh.write('combustionChamber2dV04.5.mirrored.msh')
 
 
 # if '-nopopup' not in sys.argv:
